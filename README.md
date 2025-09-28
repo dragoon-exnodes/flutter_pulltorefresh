@@ -282,6 +282,7 @@ Similarly, you may need to work with components like NotificationListener, Scrol
 - [Update Log](CHANGELOG.md)
 - [Notice](notice_en.md)
 - [FAQ](problems_en.md)
+- [TabBar gesture fix note](docs/tabbar_gesture_fix.md)
 
 
 ## Exist Problems

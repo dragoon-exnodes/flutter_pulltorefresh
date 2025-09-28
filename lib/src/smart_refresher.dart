@@ -276,6 +276,45 @@ class SmartRefresherState extends State<SmartRefresher> {
   double viewportExtent = 0;
   bool _canDrag = true;
   bool _isDisposed = false;
+  bool _restoreDragScheduled = false;
+  bool _wasDeactivated = false;
+
+  bool _shouldLockDrag() {
+    final RefreshStatus? headerStatus = widget.controller.headerStatus;
+    if (headerStatus == RefreshStatus.refreshing ||
+        headerStatus == RefreshStatus.twoLevelOpening ||
+        headerStatus == RefreshStatus.twoLeveling ||
+        headerStatus == RefreshStatus.twoLevelClosing) {
+      return true;
+    }
+
+    final LoadStatus? footerStatus = widget.controller.footerStatus;
+    if (footerStatus == LoadStatus.loading) {
+      return true;
+    }
+
+    return false;
+  }
+
+  void _restoreDragAfterRouteChange() {
+    if (_shouldLockDrag()) {
+      return;
+    }
+    if (!_canDrag) {
+      setCanDrag(true);
+    } else {
+      // 强制刷新 Physics，确保去掉 NeverScrollableScrollPhysics 包裹
+      setState(() {
+        _updatePhysics = !_updatePhysics;
+      });
+    }
+
+    final RefreshStatus? headerStatus = widget.controller.headerStatus;
+    if (headerStatus == RefreshStatus.completed ||
+        headerStatus == RefreshStatus.failed) {
+      widget.controller.refreshToIdle();
+    }
+  }
 
   final RefreshIndicator defaultHeader =
       defaultTargetPlatform == TargetPlatform.iOS
@@ -531,6 +570,26 @@ class SmartRefresherState extends State<SmartRefresher> {
   }
 
   @override
+  void deactivate() {
+    _wasDeactivated = true;
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    if (_wasDeactivated) {
+      _wasDeactivated = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _isDisposed) {
+          return;
+        }
+        _restoreDragAfterRouteChange();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final RefreshConfiguration? configuration =
         RefreshConfiguration.of(context);
@@ -548,6 +607,20 @@ class SmartRefresherState extends State<SmartRefresher> {
     if (configuration == null) {
       body = RefreshConfiguration(child: body!);
     }
+
+    if (!_canDrag && !_shouldLockDrag() && !_restoreDragScheduled) {
+      _restoreDragScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreDragScheduled = false;
+        if (!mounted || _isDisposed) {
+          return;
+        }
+        if (!_shouldLockDrag()) {
+          setCanDrag(true);
+        }
+      });
+    }
+
     return LayoutBuilder(
       builder: (c2, cons) {
         viewportExtent = cons.biggest.height;

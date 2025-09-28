@@ -266,17 +266,18 @@
 
 ## 更多
 - [属性文档](propertys.md) 或者 [Api/Doc](https://pub.dev/documentation/pull_to_refresh/latest/pulltorefresh/SmartRefresher-class.html)
-- [自定义指示器](custom_indicator.md)
-- [指示器内部属性介绍](indicator_attribute.md)
+- [使用更多自定义指示器的文档](custom_indicator.md)
+- [指示器属性说明](indicator_attribute.md)
 - [更新日志](CHANGELOG.md)
-- [注意地方](notice.md)
+- [注意事项](notice.md)
 - [常见问题](problems.md)
+- [TabBar 场景手势修复说明](docs/tabbar_gesture_fix.md)
 
 ## 暂时存在的问题
 * 关于配合NestedScrollView一起使用,会出现很多奇怪的现象,当你下滑然后快速上滑,
 它会出现跳动,主要是NestedScrollView没有考虑到在BouncingScrollPhysics下的越界问题,相关flutter issue:
 34316,33367,29264,这个问题只能等待flutter修复。
-* SmartRefresher不具有向子树下的ScrollView注入刷新功能,也就是如果直接把AnimatedList,RecordableListView放在child结点是不行的,这个问题我尝试过很多个方法都失败了,由于实现原理,我必须得在slivers头部和尾部追加,事实上,这个问题也不大是我组件的问题,比如说AnimatedList,假如我要结合AnimatedList和GridView一起使用是没办法的,唯有把AnimatedList转换为SliverAnimatedList才能解决。目前呢,面对这种问题的话,我已经有临时的解决方案,但有点麻烦,要重写它内部的代码,然后在ScrollView外部
+* [TabBar 场景手势修复](https://github.com/peng8350/flutter_pulltorefresh/issues/34)
 增加SmartRefresher,详见我这两个例子[例子1](example/lib/other/refresh_animatedlist.dart)和[例子2](example/lib/other/refresh_recordable_listview.dart)
 
 
