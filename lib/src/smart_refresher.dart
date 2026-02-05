@@ -682,27 +682,21 @@ class RefreshController {
 
   void _bindState(SmartRefresherState state) {
     // Check if already bound to a different instance
-    if (_refresherState != null) {
-      // Allow re-attach if old state is disposed/unmounted (AnimatedSwitcher case)
-      if (_refresherState!._isDisposed || !_refresherState!.mounted) {
-        // Legitimate re-attach: old widget disposed, new one created
-        // Clean up old binding first
-        if (kDebugMode) {
-          debugPrint('RefreshController: Auto re-attaching to new SmartRefresher '
-                      '(old disposed: ${_refresherState!._isDisposed}, '
-                      'mounted: ${_refresherState!.mounted})');
+    if (_refresherState != null && _refresherState != state) {
+      // Different instance detected - auto re-attach
+      if (kDebugMode) {
+        debugPrint('RefreshController: Re-attaching to different SmartRefresher '
+                    '(old disposed: ${_refresherState!._isDisposed}, '
+                    'mounted: ${_refresherState!.mounted})');
+
+        // Warn if old state is still fully active (potential TabBarView issue)
+        if (!_refresherState!._isDisposed && _refresherState!.mounted) {
+          debugPrint('⚠️ WARNING: Old SmartRefresher is still active. '
+                      'If using TabBarView/PageView, each tab should have its own '
+                      'RefreshController to avoid unexpected behavior.');
         }
-        _detachPosition();
-      } else {
-        // Illegitimate: truly multiple active instances
-        assert(false,
-            "Don't use one refreshController to multiple SmartRefresher. "
-            "This usually happens in TabBarView or PageView where multiple "
-            "SmartRefreshers are active simultaneously. Each SmartRefresher "
-            "must have its own RefreshController instance.\n"
-            "If using AnimatedSwitcher with changing keys, this should work automatically.");
-        return; // Prevent binding in production (fail silently rather than crash)
       }
+      _detachPosition();
     }
     _refresherState = state;
   }
