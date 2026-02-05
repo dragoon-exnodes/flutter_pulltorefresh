@@ -2,7 +2,25 @@
 
 ## RefreshController
 * RefreshController not support new multiple times,please keep the same lifecircle with SmartRefresher
-* RefreshController can only correspond to one Smart Refresher. Don't try to assign RefreshController to multiple Smart Refreshers. The most common application scenarios are TabBarView and PageView.
+* RefreshController can only correspond to one Smart Refresher. Don't use the same RefreshController for multiple simultaneously active SmartRefreshers in TabBarView or PageView.
+* RefreshController supports auto re-attachment: When using AnimatedSwitcher or similar widgets that recreate SmartRefresher, the controller automatically re-attaches to the new instance while preserving state
+* Note: TabBarView still requires separate controller instances for each tab
+
+## AnimatedSwitcher Usage Example
+* When using AnimatedSwitcher with changing keys, SmartRefresher gets recreated but RefreshController automatically re-attaches:
+```dart
+AnimatedSwitcher(
+  duration: Duration(milliseconds: 300),
+  child: SmartRefresher(
+    key: ValueKey('$status1_$status2'), // Key changes → recreate
+    controller: _refreshController,      // Auto re-attaches
+    enablePullUp: hasNextPage,
+    onRefresh: _onRefresh,
+    child: ListView(...),
+  ),
+)
+```
+* Note: TabBarView still requires separate controller instances for each tab
 
 ## SmartRefresher
 * Don't put the ScrollView component you want to add an indicator under a component's subtree. Because of the implementation mechanism, it's not implemented with components like NotificationListener.

@@ -681,8 +681,29 @@ class RefreshController {
   }
 
   void _bindState(SmartRefresherState state) {
-    assert(_refresherState == null,
-        "Don't use one refreshController to multiple SmartRefresher,It will cause some unexpected bugs mostly in TabBarView");
+    // Check if already bound to a different instance
+    if (_refresherState != null) {
+      // Allow re-attach if old state is disposed/unmounted (AnimatedSwitcher case)
+      if (_refresherState!._isDisposed || !_refresherState!.mounted) {
+        // Legitimate re-attach: old widget disposed, new one created
+        // Clean up old binding first
+        if (kDebugMode) {
+          debugPrint('RefreshController: Auto re-attaching to new SmartRefresher '
+                      '(old disposed: ${_refresherState!._isDisposed}, '
+                      'mounted: ${_refresherState!.mounted})');
+        }
+        _detachPosition();
+      } else {
+        // Illegitimate: truly multiple active instances
+        assert(false,
+            "Don't use one refreshController to multiple SmartRefresher. "
+            "This usually happens in TabBarView or PageView where multiple "
+            "SmartRefreshers are active simultaneously. Each SmartRefresher "
+            "must have its own RefreshController instance.\n"
+            "If using AnimatedSwitcher with changing keys, this should work automatically.");
+        return; // Prevent binding in production (fail silently rather than crash)
+      }
+    }
     _refresherState = state;
   }
 
@@ -694,8 +715,12 @@ class RefreshController {
   }
 
   void _detachPosition() {
+    // Remove scroll listener safely
     position?.isScrollingNotifier.removeListener(_listenScrollEnd);
     position = null;
+
+    // Clear state reference
+    // Note: This is safe to call from _bindState() during re-attachment
     _refresherState = null;
   }
 

@@ -2,7 +2,24 @@
 
 ## RefreshController
 * RefreshController不支持多次new,请保持和SmartRefresher同样的生命周期。
-* RefreshController只能对应一个SmartRefresher,不要尝试给把RefreshController赋予多个SmartRefresher,很常见应用场景就是TabBarView和PageView
+* RefreshController只能对应一个SmartRefresher,不要在TabBarView或PageView中给多个同时存在的SmartRefresher使用同一个RefreshController
+* RefreshController支持自动重新绑定: 当使用AnimatedSwitcher等组件导致SmartRefresher重建时,controller会自动重新绑定到新实例,状态会被保留
+
+## AnimatedSwitcher使用示例
+* 当使用AnimatedSwitcher改变key值时,SmartRefresher会被重建,RefreshController会自动重新绑定:
+```dart
+AnimatedSwitcher(
+  duration: Duration(milliseconds: 300),
+  child: SmartRefresher(
+    key: ValueKey('$status1_$status2'), // Key变化时重建
+    controller: _refreshController,      // Controller自动重新绑定
+    enablePullUp: hasNextPage,
+    onRefresh: _onRefresh,
+    child: ListView(...),
+  ),
+)
+```
+* 注意: TabBarView仍然需要为每个tab创建独立的controller
 
 ## SmartRefresher
 * 当你想要关闭掉下拉和上拉的功能,可利用enablePullUp和enablePullDown这两个属性
