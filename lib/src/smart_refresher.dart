@@ -558,6 +558,28 @@ class SmartRefresherState extends State<SmartRefresher> {
       });
     }
     widget.controller._bindState(this);
+
+    // Handle animation state restoration when SmartRefresher is recreated
+    // (e.g., by AnimatedSwitcher changing keys during refresh)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isDisposed) return;
+
+      final headerStatus = widget.controller.headerMode?.value;
+      final footerStatus = widget.controller.footerMode?.value;
+
+      // If recreated while in completed/failed state, trigger idle transition
+      // This allows the retraction animation to play on the new indicator
+      if (headerStatus == RefreshStatus.completed ||
+          headerStatus == RefreshStatus.failed) {
+        widget.controller.refreshToIdle();
+      }
+
+      // Similar for footer
+      if (footerStatus == LoadStatus.failed) {
+        widget.controller.loadComplete();
+      }
+    });
+
     super.initState();
   }
 

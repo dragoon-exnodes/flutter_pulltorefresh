@@ -586,8 +586,22 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
   @override
   void initState() {
     // TODO: implement initState
+    // Only reset to idle if controller is not in an active state
+    // This preserves animation state when SmartRefresher is recreated (e.g., by AnimatedSwitcher)
     if (V == RefreshStatus) {
-      SmartRefresher.of(context)?.controller.headerMode?.value = RefreshStatus.idle;
+      final controller = SmartRefresher.of(context)?.controller;
+      final currentStatus = controller?.headerMode?.value;
+
+      // Don't reset if in active states (preserves animation during recreation)
+      if (currentStatus != RefreshStatus.refreshing &&
+          currentStatus != RefreshStatus.completed &&
+          currentStatus != RefreshStatus.failed &&
+          currentStatus != RefreshStatus.canRefresh &&
+          currentStatus != RefreshStatus.twoLeveling &&
+          currentStatus != RefreshStatus.twoLevelOpening &&
+          currentStatus != RefreshStatus.twoLevelClosing) {
+        controller?.headerMode?.value = RefreshStatus.idle;
+      }
     }
     super.initState();
   }
